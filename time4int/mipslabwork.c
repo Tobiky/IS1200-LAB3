@@ -30,10 +30,16 @@ char textstring[] = "text, more text, and even more text!";
 /* Interrupt Service Routine */
 void user_isr(void)
 {
-    time2string( textstring, mytime );
-    display_string( 3, textstring );
-    display_update();
-    tick( &mytime );	
+    IFSCLR(0) = (1 << 8);
+    timeoutcount++;
+    
+    if (timeoutcount == 10) {
+        timeoutcount = 0;	
+        time2string( textstring, mytime );
+        display_string( 3, textstring );
+        display_update();
+        tick( &mytime );
+    }
 }
 
 /* Lab-specific initialization goes here */
@@ -42,11 +48,15 @@ void labinit(void)
 	TRISD |= 0x0fe0;  // enable input on bits 11-5 (0000 1111 1110 0000)
 	*_TRISE &= 0xff00;
      
-	TMR2 = 0;         // reset timer value
-    PR2  = 31250;     // set period to 80 000 000 / (256 * 10) (1s/10 = 100ms) 
-    T2CONSET = 0x70;  // set prescaling to 111 -> 1:256
-    IFS(0) &= ~0x100; // reset interrupt flag
-    T2CONSET = 0x8000; // set timer 2 to ON 
+	TMR2 = 0;               // reset timer value
+    PR2  = 31250;           // set period to 80 000 000 / (256 * 10) (1s/10 = 100ms) 
+    T2CONSET = 0x70;        // set prescaling to 111 -> 1:256
+    IFSSET(0) &= (1 << 8);  // reset interrupt flag
+    T2CONSET = 0x8000;      // set timer 2 to ON 
+
+    IECSET(0) = (1 << 8); //set interrupt bit
+    IPCSET(2) = 0x1f; // set both prority and sub priority to highest
+    enable_interrupt();
 }
 
 /* This function is called repetitively from the main program */

@@ -21,7 +21,14 @@
 
 .global delay
 .global time2string
-         
+.global hexasc
+.global enable_interrupt
+
+.text
+enable_interrupt:
+      ei 
+      j     return
+       
 delay:
     while:
         beq  $a0, $0, return
