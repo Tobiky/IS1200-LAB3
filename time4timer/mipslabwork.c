@@ -34,11 +34,11 @@ void labinit(void)
 	TRISD |= 0x0fe0;  // enable input on bits 11-5 (0000 1111 1110 0000)
 	*_TRISE &= 0xff00;
      
-    TMR2 = 0;               // reset timer value
-    PR2  = 31250;           // set period to 80 000 000 / (256 * 10) (1s/10 = 100ms) 
-    T2CONSET = 0x70;        // set prescaling to 111 -> 1:256
-    IFSCLR(0) &= (1 << 8);  // reset interrupt flag
-    T2CONSET = 0x8000;      // set timer 2 to ON 
+    TMR2       = 0;              // reset timer value
+    PR2        = 31250;          // set period to 80 000 000 / (256 * 10) (1s/10 = 100ms) 
+    T2CONSET   = 0x70;           // set prescaling to 111 -> 1:256
+    IFSCLR(0)  = (1 << 8);       // reset interrupt flag
+    T2CONSET   = (1 << 15);      // set timer 2 to ON 
 }
 
 /* This function is called repetitively from the main program */
@@ -60,7 +60,7 @@ void labwork(void)
 
 	
     if (IFS(0) & (1 << 8)) {
-        IFSCLR(0) &= (1 << 8);    
+        IFSCLR(0) = (1 << 8);    
         timeoutcount++;
     }
 
