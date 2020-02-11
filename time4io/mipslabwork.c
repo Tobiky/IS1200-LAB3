@@ -31,8 +31,8 @@ void user_isr(void)
 /* Lab-specific initialization goes here */
 void labinit(void)
 {
-	TRISD |= 0x0fe0;
-	*_TRISE &= 0xfff0;
+	TRISDSET = 0x0fe0;
+	*_TRISE &= ~0xff;
 	return;
 }
 
