@@ -74,32 +74,51 @@ void labinit(void)
 /* This function is called repetitively from the main program */
 void labwork(void)
 {
-	int btns;
-	if ((btns = getbtns())) {
+    // We get the state of the buttons and put them inside a variable as the state will be reused in several parts
+    // inside the if statement.
+	int btns = getbtns();
+
+    // As C treats 0 as false and anything else as true, as long as any button has a state the value will
+    // be treated as true.
+	if (btns) {
+        // Same as with the buttons, we save the state as it will be reused.
 		int swt = getsw();
 		
+        // BTN2 (Button 2) is on the first bit, and the others follow, as per the specifications in the instructions for getbtns().
 		if (btns & 0x1)
-			mytime = (mytime & 0xff0f) | (swt << (1 * 4));
+			// We mask mytime so the specific slot only has the bits we OR into place.
+            // The masked off bits are replaced with the state of the switches by shifting those values into the correct values.
+            // As the values are shifted in 4's we can make it easier for ourselves by writing it in mulitples of 4.
+            mytime = (mytime & 0xff0f) | (swt << (1 * 4));
 
+        // BTN3
 		if (btns & 0x2)
+            // The same as for BTN2 but a different slot and different shift value
 			mytime = (mytime & 0xf0ff) | (swt << (2 * 4));
 
+        // BTN4
 		if (btns & 0x4)
+            // The same as for BTN2 but a different slot and different shift value
 			mytime = (mytime & 0x0fff) | (swt << (3 * 4));
 	}
 
-	*_PORTE &= 0x0ff;
+    // Subroutines from previos lab assignments and display functions
 	delay(1000);
 	time2string(textstring, mytime);
 	display_string(3, textstring);
 	display_update();
 	tick(&mytime);
 	display_image(96, icon);
+
+    // The instructions ask us to update the LEDs with binary increases
+    // but as the computer already uses binary as its format and the port E displays the very same format.
+
+    // That is, the register port E inside the computer is something like 0001 0010 1001 01001 0000 11101 1001 1000
+    // Those 8 first bits are the ones that decide which leds are on or off
+
+    // If we think of them as starting on all 0 and increase in binary form, we get
+    // 0000 0000 -> 0000 0001 -> 0000 0010 -> 0000 0011 -> etc
+
+    // Which already performs the function asked from the instructions. As such we only increase the value of port E.
 	(*_PORTE)++;
 }
-
-//QUESTIONS
-//The third and second didgit changes. Because we have an if for if any button is pushed
-//TRISE = the value, TRISESET = set the value (index + 1), TRISECLR = clear the value (index + 1)
-//v0
-//?????
