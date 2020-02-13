@@ -12,7 +12,7 @@
 
 #include <stdint.h>   /* Declarations of uint_32 and the like */
 #include <pic32mx.h>  /* Declarations of system-specific addresses etc */
-#include "mipslab.h"  /* Declatations for these labs/
+#include "mipslab.h"  /* Declatations for these labs*/
 
 int prime = 1234567;
 
@@ -26,16 +26,23 @@ char textstring[] = "text, more text, and even more text!";
 /* Interrupt Service Routine */
 void user_isr(void)
 {
-    IFSCLR(0) = (1 << 8);
-    timeoutcount++;
-    
-    if (timeoutcount == 10) {
-        timeoutcount = 0;	
+    if (IFS(0) & (1 << 19)) { 
+        IFSCLR(0) = (1 << 19);
+        PORTE++;
+    }
+
+    if (IFS(0) & (1 << 8)) {  
+        IFSCLR(0) = (1 << 8);
+        timeoutcount++;
         
-        time2string( textstring, mytime );
-        display_string( 3, textstring );
-        display_update();
-        tick( &mytime );
+        if (timeoutcount == 10) {
+            timeoutcount = 0;	
+            
+            time2string( textstring, mytime );
+            display_string( 3, textstring );
+            display_update();
+            tick( &mytime );
+        }
     }
 }
 
@@ -44,7 +51,9 @@ void labinit(void)
 {
 	TRISDSET = 0x0fe0;  // enable input on bits 11-5 (0000 1111 1110 0000)
 	TRISESET = 0xff00;
-     
+    PORTE    = 0;
+
+
 	TMR2       = 0;               // reset timer value
     PR2        = 31250;           // set period to 80 000 000 / (256 * 10) (1s/10 = 100ms) 
     T2CONSET   = 0x70;        // set prescaling to 111 -> 1:256
@@ -54,9 +63,10 @@ void labinit(void)
     IECSET(0) = (1 << 8); //set interrupt bit
     IPCSET(2) = 0x1f; // set both prority and sub priority to highest
 
+    IECSET(0) = 1 << 19; 
+    IPCSET(4) = 0x1f << 24;
+    INTCONSET = 1 << 4; 
     
-    IPCSET(4) = 0x1f << 8;
-
     enable_interrupt();
 }
 

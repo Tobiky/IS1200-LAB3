@@ -57,6 +57,7 @@ void labinit(void)
 
     IECSET(0) = (1 << 8); //set interrupt bit
     IPCSET(2) = 0x1f; // set both prority and sub priority to highest
+    
     enable_interrupt();
 }
 
