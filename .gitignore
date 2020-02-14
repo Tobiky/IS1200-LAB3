@@ -1,7 +1,7 @@
 # User defined
 *.pdf
 *.swp
-*.swo
+.swo
 
 # Prerequisites
 *.d
