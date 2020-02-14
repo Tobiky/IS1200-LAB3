@@ -31,21 +31,54 @@ void user_isr(void)
 /* Lab-specific initialization goes here */
 void labinit(void)
 {
-	TRISD |= 0x0fe0;  // enable input on bits 11-5 (0000 1111 1110 0000)
-	*_TRISE &= 0xff00;
+    // Same as in time4io/mipslabwork.c but we use the set register instead of pointers, as they
+    // are unnecessary now. 
+	TRISESET = ~0xff;
+	TRISDSET = 0xfe0;
+
+
+
+    // There exists a total of two IFS registers, as you can see in the PIC32MX Family Data Sheet 
+    // page 51 (https://ww1.microchip.com/downloads/en/DeviceDoc/61143H.pdf)
      
-    TMR2       = 0;              // reset timer value
+    // In the Timer Section manual (https://ww1.microchip.com/downloads/en/DeviceDoc/61105F.pdf), 
+    // "Control Registers" chapter, we can see that there are three relevant registers; 
+    // TxCON (Timer x Controll Register), TMRx (Timer x Timer Value), and PRx (Timer x Period Register) 
+    // (replace "x" with the timer number). 
+    
+    // As the instructions tell us to use timer 2, T1CON is irrelvant.
+    // TxCON holds most of the configuration for the timer, but as for as we are concerned only bits 4-6 and 15 matters. 
+    // When bit 15 is 1 the timer is on and vice versa. We will come to bits 4-6 later in this function.
+
+    
+    // We set bit 15 to 0 for timer 2, so that it is not running while we change everything and we start off with correct values.
+    // The bit may already be set to 0 when the program starts, however we can not assume this and thus enforce it.
+    T2CONCLR   = 1 < 15  // Turn the timer off
+
+    // TMx holds the value of timer x, so TM2 holds the value of timer 2. 
+    // This value is set to 0 so we can be sure the timer starts at 0.
+    TMR2       = 0; // Reset timer value
+
+    // IMPROVE PRESCALING ARGUMENT
+    // The prescaling for the timer is also part of TxCON, specifically bits 4-6.
+    // As the frequency (or speed) of the clock is at 80 MHz, we know that it will tick
+    // 80 million times in 1 second. But we know, from the lecture slides, that the period
+    // is not big enough to hold that number, so we use the largest prescaling since 100 ms = 0.1s
+    T2CONSET   = 0x70;           // Set prescaling to 111 -> 1:256
+    
+    // PRx holds the period of timer x, so PR2 holds the period of timer 2.
+    // 
     PR2        = 31250;          // set period to 80 000 000 / (256 * 10) (1s/10 = 100ms) 
-    T2CONSET   = 0x70;           // set prescaling to 111 -> 1:256
-    IFSCLR(0)  = (1 << 8);       // reset interrupt flag
-    T2CONSET   = (1 << 15);      // set timer 2 to ON 
+    IFSCLR(0)  = 1 << 8;       // reset interrupt flag
+    T2CONSET   = 1 << 15;      // set timer 2 to ON 
 }
 
 /* This function is called repetitively from the main program */
 void labwork(void)
 {
-    int btns;
-	if ((btns = getbtns())) {
+    // Review the comments in time4io/mipslabwork.c if you are confused about this part
+    int btns = getbtns();
+	if (btns) {
 		int swt = getsw();
 		
 		if (btns & 0x1)
@@ -58,9 +91,9 @@ void labwork(void)
 			mytime = (mytime & 0x0fff) | (swt << (3 * 4));
 	}
 
-	
+    // IFS is an acronym for Interrupt Flag Status. Each bit is a different flag - which matches for a different register.
     if (IFS(0) & (1 << 8)) {
-        IFSCLR(0) = (1 << 8);    
+        IFSCLR(0) = 1 << 8;    
         timeoutcount++;
     }
 
