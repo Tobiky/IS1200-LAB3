@@ -14,13 +14,7 @@
 #include <pic32mx.h>  /* Declarations of system-specific addresses etc */
 #include "mipslab.h"  /* Declatations for these labs */
 
-volatile int* _TRISE = (volatile int*)0xbf886100;
-volatile int* _PORTE = (volatile int*)0xbf886110;
-
-
 int prime = 1234567;
-
-
 
 int timeoutcount = 0;
 int mytime = 0x5957;
@@ -45,18 +39,19 @@ void user_isr(void)
 
 /* Lab-specific initialization goes here */
 void labinit(void)
-{
-	TRISD   |= 0x0fe0;  // enable input on bits 11-5 (0000 1111 1110 0000)
-	*_TRISE &= 0xff00;
+{ 
+	TRISESET = ~0xff;           // Set LED bits to outputs
+	TRISDSET = 0xfe0;           // Set Switches and Buttons to inputs
+    
+    T2CONCLR  = 1 << 15;        // Turn the timer off
+    TMR2       = 0;             // Reset timer value
+    T2CONSET   = 0x70;          // Set prescaling to 111 -> 1:256 (0111 0000) 
+    PR2        = 31250;         // Set period to 80 000 000 / (256 * 10) (1s/10 = 100ms) 
+    IFSCLR(0)  = 1 << 8;        // Reset interrupt flag
+    T2CONSET   = 1 << 15;       // Set timer 2 to ON 
      
-	TMR2       = 0;               // reset timer value
-    PR2        = 31250;           // set period to 80 000 000 / (256 * 10) (1s/10 = 100ms) 
-    T2CONSET   = 0x70;        // set prescaling to 111 -> 1:256
-    IFSSET(0) &= (1 << 8);  // reset interrupt flag
-    T2CONSET   = (1 << 15);      // set timer 2 to ON 
-
-    IECSET(0) = (1 << 8); //set interrupt bit
-    IPCSET(2) = 0x1f; // set both prority and sub priority to highest
+    IECSET(0) = (1 << 8);       // Set interrupt bit
+    IPCSET(2) = 0x1f;           // Set both prority and sub priority to highest
     
     enable_interrupt();
 }
