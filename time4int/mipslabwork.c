@@ -8,6 +8,7 @@
 
    This file modified 2017-04-31 by Ture Teknolog
 
+   Modified by A Hammarstrand 2020-02-17
    For copyright and licensing, see file COPYING */
 
 #include <stdint.h>   /* Declarations of uint_32 and the like */
@@ -24,6 +25,8 @@ char textstring[] = "text, more text, and even more text!";
 /* Interrupt Service Routine */
 void user_isr(void)
 {
+    // As per the instructinons we move the main work of labwork to
+    // user_isr.
     IFSCLR(0) = (1 << 8);
     timeoutcount++;
     
@@ -50,22 +53,41 @@ void labinit(void)
     IFSCLR(0)  = 1 << 8;        // Reset interrupt flag
     T2CONSET   = 1 << 15;       // Set timer 2 to ON 
      
+    // From the previous part where we dug through the family data sheet we will 
+    // likewise find out bit placements there. But how do we know what to look for?
+    // Except for looking at the instructions, we can also find it through the
+    // "Section 8: Interrupts" manual. Heading to the "Control Register" chapter, again
+    // we can see a number of different registers and register parts. We want to enable 
+    // interrupts so that is what we'll look for.
+
+    // IECx mentions interrputs ans is actually an acronym for "Interrupt Enable Control [Register x]".
+    // What we want is to enable an interrupt and so the IECx register fits us perfectly.
+    // To find what bit we, as mentioned earlier, look through the data sheet but now we know
+    // to look on the IECx rows.
+
+    // But you also might remember that above TxIF there was an "TxIE" in IEC0. As you may
+    // guess, the IE part is an acronym for "Interrupt Enable". Now we know that we should look for
+    // T2IE, as were working on timer 2.
     IECSET(0) = (1 << 8);       // Set interrupt bit
+
+    // Below IECx you can see IPCx, which stands for Interrupt Pirority Control.
+    // At first glance this seems to be something unnecessary for the "simple" things we are doing.
+    // However, if you jump to its section of that manual, you will see that complete 0 values means
+    // disabled, which is not what we want.
+    // To make it simple for us, we set both priority and sub-priority to complete 1 values. There
+    // are no other interrupts so it does not matter.
     IPCSET(2) = 0x1f;           // Set both prority and sub priority to highest
-    
+   
+    // We call the enable_interrupt subroutine so that interrupts are enabled on the CPU.
     enable_interrupt();
 }
 
 /* This function is called repetitively from the main program */
 void labwork(void)
 {
+    // The instructions has told us to replace the labwork
+    // body with this new body.
     prime = nextprime( prime );
     display_string( 0, itoaconv( prime ) );
     display_update();
 }
-
-//QUESTIONS
-//The third and second didgit changes. Because we have an if for if any button is pushed
-//TRISE = the value, TRISESET = set the value (index + 1), TRISECLR = clear the value (index + 1)
-//v0
-//?????

@@ -26,6 +26,7 @@
 
 .text
 enable_interrupt:
+      # The ei instruction sets all register the CPU needs to handle interrupts
       ei 
       j     return
        
